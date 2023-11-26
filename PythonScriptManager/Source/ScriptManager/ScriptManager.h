@@ -1,13 +1,13 @@
 #pragma once
 #include <filesystem>
+#include <pybind11\embed.h>
 #include <pybind11\functional.h>
 #include <pybind11\gil.h>
-#include "Models\ScriptModule.h"
-#include "Logger.h"
-
-using namespace Scripting::Models;
-
 namespace py = pybind11;
+
+#include "Logger.h"
+#include "Models\ScriptModule.h"
+using namespace Scripting::Models;
 
 namespace Scripting {
   /// <summary>
