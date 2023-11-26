@@ -11,7 +11,7 @@ using namespace Scripting::Models;
 
 namespace Scripting {
   /// <summary>
-  /// Aimple examples of logger overrides.
+  /// Simple examples of logger overrides.
   /// </summary>
   inline void log_debug(const std::string& message) {
     std::cout << "[INFO]: " << message.c_str() << std::endl;
