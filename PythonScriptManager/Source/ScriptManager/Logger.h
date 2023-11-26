@@ -6,9 +6,9 @@
 
 namespace Scripting {
   enum LogType : unsigned int {
-    INFO = 0,
-    WARNING,
-    ERROR,
+    LOG_INFO = 0,
+    LOG_WARNING,
+    LOG_ERROR,
     LOG_TYPE_COUNT
   };
 

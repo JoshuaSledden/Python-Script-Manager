@@ -31,9 +31,9 @@ namespace Scripting {
   /// </summary>
   class ScriptManager {
     ScriptManager() {
-      logger_.set_logger(LogType::INFO, &log_debug);
-      logger_.set_logger(LogType::WARNING, &log_warning);
-      logger_.set_logger(LogType::ERROR, &log_error);
+      logger_.set_logger(LogType::LOG_INFO, &log_debug);
+      logger_.set_logger(LogType::LOG_WARNING, &log_warning);
+      logger_.set_logger(LogType::LOG_ERROR, &log_error);
     }
     ~ScriptManager() = default;
 
@@ -90,12 +90,12 @@ namespace Scripting {
           }
         }
 
-        logger_.log_message(LogType::INFO, "ScriptManager::load_script - Script Module Loaded: ", module_name);
+        logger_.log_message(LogType::LOG_INFO, "ScriptManager::load_script - Script Module Loaded: ", module_name);
       }
       catch (const py::error_already_set& e) {
         // An exception occurred, print the error message and traceback
         PyErr_Print();
-        logger_.log_message(LogType::ERROR, "ScriptManager::load_script - Script Error.\n", e.what());
+        logger_.log_message(LogType::LOG_ERROR, "ScriptManager::load_script - Script Error.\n", e.what());
 
         // Access the Python traceback
         PyObject* type, * value, * traceback;
@@ -104,7 +104,7 @@ namespace Scripting {
         // Print the traceback
         if (traceback) {
           py::object print_tb = py::module::import("traceback").attr("print_tb");
-          logger_.log_message(LogType::ERROR, "Trace:\n", traceback);
+          logger_.log_message(LogType::LOG_ERROR, "Trace:\n", traceback);
         }
       }
     }
@@ -120,7 +120,7 @@ namespace Scripting {
       const auto it = loaded_modules_.find(module_name);
 
       if (it == loaded_modules_.end()) {
-        logger_.log_message(LogType::ERROR, "ScriptManager::reload_script - Error: Script not loaded.");
+        logger_.log_message(LogType::LOG_ERROR, "ScriptManager::reload_script - Error: Script not loaded.");
         return;
       }
 
@@ -148,12 +148,12 @@ namespace Scripting {
           }
         }
 
-        logger_.log_message(LogType::INFO, "ScriptManager::reload_script - Reloaded Module: ", module_name);
+        logger_.log_message(LogType::LOG_INFO, "ScriptManager::reload_script - Reloaded Module: ", module_name);
       }
       catch (const py::error_already_set& e) {
         // An exception occurred, print the error message and traceback
         PyErr_Print();
-        logger_.log_message(LogType::ERROR, "ScriptManager::reload_script - Error.\n", e.what());
+        logger_.log_message(LogType::LOG_ERROR, "ScriptManager::reload_script - Error.\n", e.what());
 
         // Access the Python traceback
         PyObject* type, * value, * traceback;
@@ -162,7 +162,7 @@ namespace Scripting {
         // Print the traceback
         if (traceback) {
           py::object print_tb = py::module::import("traceback").attr("print_tb");
-          logger_.log_message(LogType::ERROR, "Trace:\n", traceback);
+          logger_.log_message(LogType::LOG_ERROR, "Trace:\n", traceback);
         }
       }
     }
@@ -177,7 +177,7 @@ namespace Scripting {
 
       // Check if the directory exists
       if (!std::filesystem::exists(module_path) || !std::filesystem::is_directory(module_path)) {
-        logger_.log_message(LogType::ERROR, "ScriptManager::load_scripts: directory not found - ", module_path);
+        logger_.log_message(LogType::LOG_ERROR, "ScriptManager::load_scripts: directory not found - ", module_path);
         return;
       }
 
@@ -214,7 +214,7 @@ namespace Scripting {
           auto script_module = cached_module->script_module();
           try {
             if (py::hasattr(*script_module, event_key_name.c_str())) {
-              logger_.log_message(LogType::INFO, "ScriptManager::dispatch_event - Dispatching cached event: ", event_key_name);
+              logger_.log_message(LogType::LOG_INFO, "ScriptManager::dispatch_event - Dispatching cached event: ", event_key_name);
 
               // Call the specified Python function variadically
               py::object result = script_module->attr(event_key_name.c_str())(
@@ -224,7 +224,7 @@ namespace Scripting {
           catch (const py::error_already_set& e) {
             // An exception occurred, print the error message and traceback
             PyErr_Print();
-            logger_.log_message(LogType::ERROR, "ScriptManager::dispatch_event - Script Error.\n",
+            logger_.log_message(LogType::LOG_ERROR, "ScriptManager::dispatch_event - Script Error.\n",
               e.what());
 
             // Access the Python traceback
@@ -234,7 +234,7 @@ namespace Scripting {
             // Print the traceback
             if (traceback) {
               py::object print_tb = py::module::import("traceback").attr("print_tb");
-              logger_.log_message(LogType::ERROR, "Trace:\n", traceback);
+              logger_.log_message(LogType::LOG_ERROR, "Trace:\n", traceback);
             }
           }
         }
@@ -251,7 +251,7 @@ namespace Scripting {
           // Check if the function exists in the script
           try {
             if (py::hasattr(*module, event_key_name.c_str())) {
-              logger_.log_message(LogType::INFO, "ScriptManager::dispatch_event - Dispatching event: ", event_key_name);
+              logger_.log_message(LogType::LOG_INFO, "ScriptManager::dispatch_event - Dispatching event: ", event_key_name);
 
               // Call the specified Python function variadically
               py::object result = module->attr(event_key_name.c_str())(
@@ -264,7 +264,7 @@ namespace Scripting {
           catch (const py::error_already_set& e) {
             // An exception occurred, print the error message and traceback
             PyErr_Print();
-            logger_.log_message(LogType::ERROR, "ScriptManager::dispatch_event - Script Error.\n",
+            logger_.log_message(LogType::LOG_ERROR, "ScriptManager::dispatch_event - Script Error.\n",
               e.what());
 
             // Access the Python traceback
@@ -274,14 +274,14 @@ namespace Scripting {
             // Print the traceback
             if (traceback) {
               py::object print_tb = py::module::import("traceback").attr("print_tb");
-              logger_.log_message(LogType::ERROR, "Trace:\n", traceback);
+              logger_.log_message(LogType::LOG_ERROR, "Trace:\n", traceback);
             }
           }
         }
 
         // If the function was found in any modules add it to the cache with the valid modules.
         if (!valid_modules.empty()) {
-          logger_.log_message(LogType::INFO, "ScriptManager::dispatch_event - Creating function cache for event: ", event_key_name);
+          logger_.log_message(LogType::LOG_INFO, "ScriptManager::dispatch_event - Creating function cache for event: ", event_key_name);
           module_function_cache_[event_key_name] = valid_modules;
         }
       }
