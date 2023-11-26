@@ -2,8 +2,9 @@
 #include <filesystem>
 #include <pybind11\functional.h>
 #include <pybind11\gil.h>
-#include "Logger.h"
 #include "Models\ScriptModule.h"
+#include "Logger.h"
+
 using namespace Scripting::Models;
 
 namespace py = pybind11;

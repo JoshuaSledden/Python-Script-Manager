@@ -1,7 +1,7 @@
 #include <thread>
 #include <pybind11\embed.h>
 
-#include "src\ScriptManager.h"
+#include "ScriptManager\ScriptManager.h"
 
 int main()
 {	
