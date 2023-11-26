@@ -2,15 +2,16 @@
 #include <filesystem>
 #include <pybind11\functional.h>
 #include <pybind11\gil.h>
-#include "Logger.h"
 #include "Models\ScriptModule.h"
+#include "Logger.h"
+
 using namespace Scripting::Models;
 
 namespace py = pybind11;
 
 namespace Scripting {
   /// <summary>
-  /// A simple example logger override for FlyFF.
+  /// A simple example logger override.
   /// </summary>
   inline void log_message(const std::string& message) {
     std::cout << "[LOG]: " << message.c_str() << std::endl;

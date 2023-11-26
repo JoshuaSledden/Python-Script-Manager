@@ -1,5 +1,5 @@
 #pragma once
-#include "../ScriptManager.h"
+#include "..\ScriptManager.h"
 
 inline void reload_script(const std::string& module_name) {
   Scripting::reload_script(module_name);
