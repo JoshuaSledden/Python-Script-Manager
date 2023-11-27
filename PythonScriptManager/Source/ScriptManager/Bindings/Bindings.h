@@ -13,8 +13,13 @@ inline void pong(const std::string& text) {
   output_text(text);
 }
 
+inline void event_handled(const std::string& text) {
+  output_text(text);
+}
+
 inline void init_generic_bindings(py::module& module) {
   module.def("reload_script", &reload_script);
   module.def("output_text", &output_text);
   module.def("pong", &pong);
+  module.def("event_handled", &event_handled);
 }
