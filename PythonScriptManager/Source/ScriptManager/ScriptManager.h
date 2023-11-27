@@ -95,13 +95,6 @@ namespace Scripting {
         const auto script = std::make_shared<ScriptModule>(module_name, std::make_shared<py::module_>(module), absolute_path, relative_path);
         loaded_modules_[module_name] = script;
 
-        // Check if any of the cached functions are held within this module and add it to those cache entries.
-        for (const auto& function_name : module_function_cache_) {
-          if (py::hasattr(*module, function_name.first.c_str())) {
-            module_function_cache_[function_name.first].push_back(script);
-          }
-        }
-
         if (callback_on_load) {
           callback_on_load(module_name, script);
         }
@@ -143,27 +136,8 @@ namespace Scripting {
       // Reload the module.
       const auto script = it->second;
 
-      // Remove the module from cache so reloading is effective.
-      for (auto& [function_name, modules] : module_function_cache_) {
-        auto found_module = std::find_if(modules.begin(), modules.end(), [&script](const std::shared_ptr<ScriptModule>& module) {
-          return module->name() == script->name();
-          });
-
-        if (found_module != modules.end()) {
-          modules.erase(found_module);
-        }
-      }
-
       try {
         script->script_module()->reload();
-
-        // Add the reloaded module in to any function cache where applicable.
-        for (const auto& function_name : module_function_cache_) {
-          if (py::hasattr(*script->script_module(), function_name.first.c_str())) {
-            module_function_cache_[function_name.first].push_back(script);
-          }
-        }
-
         logger_ptr_->log_message(LogType::LOG_INFO, "ScriptManager::reload_script - Reloaded Module: ", module_name);
       }
       catch (const py::error_already_set& e) {
@@ -276,86 +250,42 @@ namespace Scripting {
     void dispatch_event(const std::string& event_key_name, Args&&... args) {
       py::gil_scoped_acquire acquire;
 
-      // Is this function already in the cache?
-      const auto it = module_function_cache_.find(event_key_name);
+      // The function was not found in cache so we will iterate over all loaded modules and if the event is active in any module we will add it to cache.
+      std::vector<std::shared_ptr<ScriptModule>> valid_modules;
 
-      // If it was found in cache, instead of iterating over all loaded modules, iterate over each module in the cache associated with this function.
-      if (it != module_function_cache_.end()) {
-        const auto cached_function_modules = it->second;
+      // Iterate over all loaded scripts
+      for (const auto& loaded_script : loaded_modules_) {
+        const auto script = loaded_script.second;
+        const auto module = script->script_module().get();
 
-        for (const auto& cached_module : cached_function_modules) {
-          auto script_module = cached_module->script_module();
-          try {
-            if (py::hasattr(*script_module, event_key_name.c_str())) {
-              logger_ptr_->log_message(LogType::LOG_INFO, "ScriptManager::dispatch_event - Dispatching cached event: ", event_key_name);
+        // Check if the function exists in the script
+        try {
+          if (py::hasattr(*module, event_key_name.c_str())) {
+            logger_ptr_->log_message(LogType::LOG_INFO, "ScriptManager::dispatch_event - Dispatching event: ", event_key_name);
 
-              // Call the specified Python function variadically
-              py::object result = script_module->attr(event_key_name.c_str())(
-                std::forward<Args>(args)...);
-            }
-          }
-          catch (const py::error_already_set& e) {
-            // An exception occurred, print the error message and traceback
-            PyErr_Print();
-            logger_ptr_->log_message(LogType::LOG_ERROR, "ScriptManager::dispatch_event - Script Error.\n",
-              e.what());
+            // Call the specified Python function variadically
+            py::object result = module->attr(event_key_name.c_str())(
+              std::forward<Args>(args)...);
 
-            // Access the Python traceback
-            PyObject* type, * value, * traceback;
-            PyErr_Fetch(&type, &value, &traceback);
-
-            // Print the traceback
-            if (traceback) {
-              py::object print_tb = py::module::import("traceback").attr("print_tb");
-              logger_ptr_->log_message(LogType::LOG_ERROR, "Trace:\n", traceback);
-            }
+            // Add the module so it gets added to the function cache.
+            valid_modules.push_back(script);
           }
         }
-      }
-      else {
-        // The function was not found in cache so we will iterate over all loaded modules and if the event is active in any module we will add it to cache.
-        std::vector<std::shared_ptr<ScriptModule>> valid_modules;
+        catch (const py::error_already_set& e) {
+          // An exception occurred, print the error message and traceback
+          PyErr_Print();
+          logger_ptr_->log_message(LogType::LOG_ERROR, "ScriptManager::dispatch_event - Script Error.\n",
+            e.what());
 
-        // Iterate over all loaded scripts
-        for (const auto& loaded_script : loaded_modules_) {
-          const auto script = loaded_script.second;
-          const auto module = script->script_module().get();
+          // Access the Python traceback
+          PyObject* type, * value, * traceback;
+          PyErr_Fetch(&type, &value, &traceback);
 
-          // Check if the function exists in the script
-          try {
-            if (py::hasattr(*module, event_key_name.c_str())) {
-              logger_ptr_->log_message(LogType::LOG_INFO, "ScriptManager::dispatch_event - Dispatching event: ", event_key_name);
-
-              // Call the specified Python function variadically
-              py::object result = module->attr(event_key_name.c_str())(
-                std::forward<Args>(args)...);
-
-              // Add the module so it gets added to the function cache.
-              valid_modules.push_back(script);
-            }
+          // Print the traceback
+          if (traceback) {
+            py::object print_tb = py::module::import("traceback").attr("print_tb");
+            logger_ptr_->log_message(LogType::LOG_ERROR, "Trace:\n", traceback);
           }
-          catch (const py::error_already_set& e) {
-            // An exception occurred, print the error message and traceback
-            PyErr_Print();
-            logger_ptr_->log_message(LogType::LOG_ERROR, "ScriptManager::dispatch_event - Script Error.\n",
-              e.what());
-
-            // Access the Python traceback
-            PyObject* type, * value, * traceback;
-            PyErr_Fetch(&type, &value, &traceback);
-
-            // Print the traceback
-            if (traceback) {
-              py::object print_tb = py::module::import("traceback").attr("print_tb");
-              logger_ptr_->log_message(LogType::LOG_ERROR, "Trace:\n", traceback);
-            }
-          }
-        }
-
-        // If the function was found in any modules add it to the cache with the valid modules.
-        if (!valid_modules.empty()) {
-          logger_ptr_->log_message(LogType::LOG_INFO, "ScriptManager::dispatch_event - Creating function cache for event: ", event_key_name);
-          module_function_cache_[event_key_name] = valid_modules;
         }
       }
     }
@@ -369,9 +299,6 @@ namespace Scripting {
 
     // List of all the loaded python script modules
     std::unordered_map<std::string, std::shared_ptr<ScriptModule>> loaded_modules_;
-
-    // A cache that holds all functions a script holds (for performance purposes)
-    std::unordered_map <std::string, std::vector<std::shared_ptr<ScriptModule>>> module_function_cache_;
   };
 
   /// <summary>

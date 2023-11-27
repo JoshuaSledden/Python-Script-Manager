@@ -43,7 +43,7 @@ void dispatch_events(int dispatch_count) {
 double load_test(double last_run_time_seconds, bool multi_threaded) {
   clear_console();
 
-  int dispatch_count, num_events_per_loop;
+  int dispatch_count;
   auto num_threads = 1;
 
   std::cout << "Enter the number of dispatches for this test: ";
@@ -144,7 +144,6 @@ int main() {
   while (true) {
     std::cout << "loadtest : Run a loadtest of the script manager (-mt: multithreaded execution)" << std::endl;
     std::cout << "   -mt: multi-threaded execution." << std::endl;
-    std::cout << "   -nocache: execute load test with caching system off." << std::endl;
     std::cout << std::endl;
     std::cout << "example: Run an example ping/ping script" << std::endl;
     std::cout << std::endl;
