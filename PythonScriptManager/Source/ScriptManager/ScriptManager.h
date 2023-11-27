@@ -73,7 +73,8 @@ namespace Scripting {
     /// Load an individual python module in to memory.
     /// </summary>
     /// <param name="module_path">Module path of the python script.</param>
-    void load_script(const std::filesystem::path& module_path, std::function<void(const std::string&, const std::shared_ptr<ScriptModule>)> callback_on_load) {
+    /// <param name="callback_on_load">Callback function that will be called when the script successfully loads</param>
+    void load_script(const std::filesystem::path& module_path, std::function<void(const std::string&, const std::shared_ptr<ScriptModule>)> callback_on_load = {}) {
       py::gil_scoped_acquire acquire;
 
       // Use an absolute path to ensure consistency
@@ -183,6 +184,7 @@ namespace Scripting {
     /// Load all scripts from a given path.
     /// </summary>
     /// <param name="path">The path housing the python scripts.</param>
+    /// <param name="callback_on_load">Callback function that will be called when each script successfully loads</param>
     void load_scripts(const std::filesystem::path& path = std::filesystem::path(), std::function<void(const std::string&, const std::shared_ptr<ScriptModule>)> callback_on_load = {}) {
       const std::filesystem::path current_path = std::filesystem::current_path();
       const auto module_path = path.empty() ? (current_path / module_path_) : (current_path / path);
