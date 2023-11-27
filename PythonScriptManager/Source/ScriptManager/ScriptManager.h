@@ -73,7 +73,7 @@ namespace Scripting {
     /// Load an individual python module in to memory.
     /// </summary>
     /// <param name="module_path">Module path of the python script.</param>
-    void load_script(const std::filesystem::path& module_path) {
+    void load_script(const std::filesystem::path& module_path, std::function<void(const std::string&, const std::shared_ptr<ScriptModule>)> callback_on_load) {
       py::gil_scoped_acquire acquire;
 
       // Use an absolute path to ensure consistency
@@ -101,6 +101,7 @@ namespace Scripting {
           }
         }
 
+        callback_on_load(module_name, script);
         logger_ptr_->log_message(LogType::LOG_INFO, "ScriptManager::load_script - Script Module Loaded: ", module_name);
       }
       catch (const py::error_already_set& e) {
@@ -182,7 +183,7 @@ namespace Scripting {
     /// Load all scripts from a given path.
     /// </summary>
     /// <param name="path">The path housing the python scripts.</param>
-    void load_scripts(const std::filesystem::path& path = std::filesystem::path()) {
+    void load_scripts(const std::filesystem::path& path = std::filesystem::path(), std::function<void(const std::string&, const std::shared_ptr<ScriptModule>)> callback_on_load = {}) {
       const std::filesystem::path current_path = std::filesystem::current_path();
       const auto module_path = path.empty() ? (current_path / module_path_) : (current_path / path);
 
@@ -201,7 +202,63 @@ namespace Scripting {
           continue;
         }
 
-        load_script(module.path().string());
+        load_script(module.path().string(), callback_on_load);
+      }
+    }
+
+    /// <summary>
+    /// Sends an event to a single loaded script for them to handle
+    /// </summary>
+    /// <param name="module_name">name of the module we want python to handle</param>
+    /// <param name="event_key_name">name of the event function we want python to handle</param>
+    /// <param name="...args">Argument list to pass to the python handlers</param>
+    template <typename... Args>
+    void send_event_to_single_module(const std::string& module_name, const std::string& event_key_name, Args&&... args) {
+      const auto it = loaded_modules_.find(module_name);
+      if (it == loaded_modules_.end())
+      {
+        logger_ptr_->log_message(LogType::LOG_ERROR, __FUNCTION__" Could not find module: ", module_name);
+        return;
+      }
+
+      send_event_to_single_module(*it, event_key_name, args);
+    }
+
+    /// <summary>
+    /// Sends an event to a single loaded script for them to handle
+    /// </summary>
+    /// <param name="module_name">The module we want python to handle</param>
+    /// <param name="event_key_name">name of the event function we want python to handle</param>
+    /// <param name="...args">Argument list to pass to the python handlers</param>
+    template <typename... Args>
+    void send_event_to_single_module(std::shared_ptr<ScriptModule> script_module, const std::string& event_key_name, Args&&... args) {
+      py::gil_scoped_acquire acquire;
+      const auto module_ = script_module->script_module().get();
+
+      try {
+        if (py::hasattr(*script_module->script_module(), event_key_name.c_str())) {
+          logger_ptr_->log_message(LogType::LOG_INFO, "ScriptManager::dispatch_event - Dispatching cached event: ", event_key_name);
+
+          // Call the specified Python function variadically
+          py::object result = module_->attr(event_key_name.c_str())(
+            std::forward<Args>(args)...);
+        }
+      }
+      catch (const py::error_already_set& e) {
+        // An exception occurred, print the error message and traceback
+        PyErr_Print();
+        logger_ptr_->log_message(LogType::LOG_ERROR, "ScriptManager::send_event_to_single_module - Script Error.\n",
+          e.what());
+
+        // Access the Python traceback
+        PyObject* type, * value, * traceback;
+        PyErr_Fetch(&type, &value, &traceback);
+
+        // Print the traceback
+        if (traceback) {
+          py::object print_tb = py::module::import("traceback").attr("print_tb");
+          logger_ptr_->log_message(LogType::LOG_ERROR, "Trace:\n", traceback);
+        }
       }
     }
 
@@ -331,19 +388,45 @@ namespace Scripting {
   }
 
   /// <summary>
+  /// A wrapper function to send events to single modules without having to call for the instance each time.
+  /// </summary>
+  /// <typeparam name="...Args">Args list type</typeparam>
+  /// <param name="module_name">Name of the python module</param>
+  /// <param name="event_key_name">Name of the python function</param>
+  /// <param name="args">Variadic arguments to pass to the python function</param>
+  template <typename... Args>
+  void send_event_to_single_module(const std::string& module_name, const std::string& event_key_name, Args&&... args) {
+    ScriptManager::instance().send_event_to_single_module(module_name, event_key_name, std::forward<Args>(args)...);
+  }
+
+  /// <summary>
+  /// A wrapper function to send events to single modules without having to call for the instance each time.
+  /// </summary>
+  /// <typeparam name="...Args">Args list type</typeparam>
+  /// <param name="module">The python module</param>
+  /// <param name="event_key_name">Name of the python function</param>
+  /// <param name="args">Variadic arguments to pass to the python function</param>
+  template <typename... Args>
+  void send_event_to_single_module(std::shared_ptr<ScriptModule> script_module, const std::string& event_key_name, Args&&... args) {
+    ScriptManager::instance().send_event_to_single_module(script_module, event_key_name, std::forward<Args>(args)...);
+  }
+
+  /// <summary>
   /// A wrapper function to load scripts without having to call for the instance each time.
   /// </summary>
   /// <param name="path">Path name housing the python modules</param>
-  inline void load_scripts(const std::filesystem::path& path = std::filesystem::path()) {
-    ScriptManager::instance().load_scripts(path);
+  /// <param name="callback_on_load">Callback function that will be called when each script successfully loads</param>
+  inline void load_scripts(const std::filesystem::path& path = std::filesystem::path(), std::function<void(const std::string&, const std::shared_ptr<ScriptModule>)> callback_on_load = {}) {
+    ScriptManager::instance().load_scripts(path, callback_on_load);
   }
 
   /// <summary>
   /// A wrapper function to load a single script without having to call for the instance each time.
   /// </summary>
   /// <param name="module_path">Path name housing the python module</param>
-  inline void load_script(const std::filesystem::path& module_path) {
-    ScriptManager::instance().load_script(module_path);
+  /// <param name="callback_on_load">Callback function that will be called when the script successfully loads</param>
+  inline void load_script(const std::filesystem::path& module_path, std::function<void(const std::string&, const std::shared_ptr<ScriptModule>)> callback_on_load = {}) {
+    ScriptManager::instance().load_script(module_path, callback_on_load);
   }
 
   /// <summary>
