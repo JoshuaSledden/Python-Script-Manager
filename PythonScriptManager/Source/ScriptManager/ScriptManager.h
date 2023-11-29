@@ -7,9 +7,8 @@ namespace py = pybind11;
 
 #include "Logger.h"
 #include "Models\ScriptModule.h"
-using namespace Scripting::Models;
 
-namespace Scripting {
+namespace scripting {
   /// <summary>
   /// Simple examples of logger overrides.
   /// </summary>
@@ -74,7 +73,7 @@ namespace Scripting {
     /// </summary>
     /// <param name="module_path">Module path of the python script.</param>
     /// <param name="callback_on_load">Callback function that will be called when the script successfully loads</param>
-    void load_script(const std::filesystem::path& module_path, const std::function<void(const std::string&, const std::shared_ptr<ScriptModule>&)>& callback_on_load = nullptr) {
+    void load_script(const std::filesystem::path& module_path, const std::function<void(const std::string&, const std::shared_ptr<models::ScriptModule>&)>& callback_on_load = nullptr) {
       py::gil_scoped_acquire acquire;
 
       // Use an absolute path to ensure consistency
@@ -92,7 +91,7 @@ namespace Scripting {
         const auto module = py::module::import(module_name.c_str());
 
         // Store the loaded script in memory so we can interact with it throughout the server lifecycle.
-        const auto script = std::make_shared<ScriptModule>(module_name, std::make_shared<py::module_>(module), absolute_path, relative_path);
+        const auto script = std::make_shared<models::ScriptModule>(module_name, std::make_shared<py::module_>(module), absolute_path, relative_path);
         loaded_modules_[module_name] = script;
 
         if (callback_on_load) {
@@ -162,7 +161,7 @@ namespace Scripting {
     /// </summary>
     /// <param name="path">The path housing the python scripts.</param>
     /// <param name="callback_on_load">Callback function that will be called when each script successfully loads</param>
-    void load_scripts(const std::filesystem::path& path = std::filesystem::path(), const std::function<void(const std::string&, const std::shared_ptr<ScriptModule>&)>& callback_on_load = nullptr) {
+    void load_scripts(const std::filesystem::path& path = std::filesystem::path(), const std::function<void(const std::string&, const std::shared_ptr<models::ScriptModule>&)>& callback_on_load = nullptr) {
       const std::filesystem::path current_path = std::filesystem::current_path();
       const auto module_path = path.empty() ? (current_path / module_path_) : (current_path / path);
 
@@ -210,7 +209,7 @@ namespace Scripting {
     /// <param name="event_key_name">name of the event function we want python to handle</param>
     /// <param name="...args">Argument list to pass to the python handlers</param>
     template <typename... Args>
-    void send_event_to_single_module(std::shared_ptr<ScriptModule> script_module, const std::string& event_key_name, Args&&... args) {
+    void send_event_to_single_module(std::shared_ptr<models::ScriptModule> script_module, const std::string& event_key_name, Args&&... args) {
       py::gil_scoped_acquire acquire;
       const auto module_ = script_module->script_module().get();
 
@@ -251,7 +250,7 @@ namespace Scripting {
       py::gil_scoped_acquire acquire;
 
       // The function was not found in cache so we will iterate over all loaded modules and if the event is active in any module we will add it to cache.
-      std::vector<std::shared_ptr<ScriptModule>> valid_modules;
+      std::vector<std::shared_ptr<models::ScriptModule>> valid_modules;
 
       // Iterate over all loaded scripts
       for (const auto& loaded_script : loaded_modules_) {
@@ -298,7 +297,7 @@ namespace Scripting {
     std::string module_path_;
 
     // List of all the loaded python script modules
-    std::unordered_map<std::string, std::shared_ptr<ScriptModule>> loaded_modules_;
+    std::unordered_map<std::string, std::shared_ptr<models::ScriptModule>> loaded_modules_;
   };
 
   /// <summary>
@@ -340,7 +339,7 @@ namespace Scripting {
   /// <param name="event_key_name">Name of the python function</param>
   /// <param name="args">Variadic arguments to pass to the python function</param>
   template <typename... Args>
-  void send_event_to_single_module(std::shared_ptr<ScriptModule> script_module, const std::string& event_key_name, Args&&... args) {
+  void send_event_to_single_module(std::shared_ptr<models::ScriptModule> script_module, const std::string& event_key_name, Args&&... args) {
     ScriptManager::instance().send_event_to_single_module(script_module, event_key_name, std::forward<Args>(args)...);
   }
 
@@ -349,7 +348,7 @@ namespace Scripting {
   /// </summary>
   /// <param name="path">Path name housing the python modules</param>
   /// <param name="callback_on_load">Callback function that will be called when each script successfully loads</param>
-  inline void load_scripts(const std::filesystem::path& path = std::filesystem::path(), const std::function<void(const std::string&, const std::shared_ptr<ScriptModule>&)>& callback_on_load = nullptr) {
+  inline void load_scripts(const std::filesystem::path& path = std::filesystem::path(), const std::function<void(const std::string&, const std::shared_ptr<models::ScriptModule>&)>& callback_on_load = nullptr) {
     ScriptManager::instance().load_scripts(path, callback_on_load);
   }
 
@@ -358,7 +357,7 @@ namespace Scripting {
   /// </summary>
   /// <param name="module_path">Path name housing the python module</param>
   /// <param name="callback_on_load">Callback function that will be called when the script successfully loads</param>
-  inline void load_script(const std::filesystem::path& module_path, const std::function<void(const std::string&, const std::shared_ptr<ScriptModule>&)>& callback_on_load = nullptr) {
+  inline void load_script(const std::filesystem::path& module_path, const std::function<void(const std::string&, const std::shared_ptr<models::ScriptModule>&)>& callback_on_load = nullptr) {
     ScriptManager::instance().load_script(module_path, callback_on_load);
   }
 

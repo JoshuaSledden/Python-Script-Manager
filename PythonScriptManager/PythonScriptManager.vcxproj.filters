@@ -1,20 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Source\ScriptManager\Bindings\Bindings.cpp">
-      <Filter>ScriptManager\Bindings</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Program.cpp" />
+    <ClCompile Include="Source\ScriptManager\Definitions\Definitions.cpp">
+      <Filter>ScriptManager\Definitions</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ScriptManager">
       <UniqueIdentifier>{8491f9bc-c1ab-4d92-9577-100743d4e467}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ScriptManager\Bindings">
-      <UniqueIdentifier>{734ff7a4-9298-461d-b409-d4efb80c47f4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ScriptManager\Models">
       <UniqueIdentifier>{e7a62d2a-4b3e-4df6-9a17-a430e06aed81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ScriptManager\Definitions">
+      <UniqueIdentifier>{b6e03d36-0e84-4a1c-9f50-ef661bf25821}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ScriptManager\Events">
+      <UniqueIdentifier>{007c8a82-3865-46f5-a491-5ac5544236f3}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -24,11 +27,21 @@
     <ClInclude Include="Source\ScriptManager\Logger.h">
       <Filter>ScriptManager</Filter>
     </ClInclude>
-    <ClInclude Include="Source\ScriptManager\Bindings\Bindings.h">
-      <Filter>ScriptManager\Bindings</Filter>
-    </ClInclude>
     <ClInclude Include="Source\ScriptManager\Models\ScriptModule.h">
       <Filter>ScriptManager\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ScriptManager\Definitions\LoadTestDefinitions.h">
+      <Filter>ScriptManager\Definitions</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ScriptManager\Definitions\ExampleDefinitions.h">
+      <Filter>ScriptManager\Definitions</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\ScriptManager\Events\Events.h">
+      <Filter>ScriptManager\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="Source\User.h" />
+    <ClInclude Include="Source\ScriptManager\Events\ExampleEvents.h">
+      <Filter>ScriptManager\Events</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

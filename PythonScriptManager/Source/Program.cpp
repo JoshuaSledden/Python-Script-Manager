@@ -7,7 +7,10 @@
 // Include pybind11
 #include <pybind11/embed.h>
 
-#include "ScriptManager\Bindings\Bindings.h"
+#include "User.h"
+#include "ScriptManager\Definitions\ExampleDefinitions.h"
+#include "ScriptManager\Events\Events.h"
+#include "ScriptManager\Events\ExampleEvents.h"
 namespace py = pybind11;
 
 // Include your ScriptManager
@@ -22,20 +25,8 @@ void clear_console() {
 }
 
 void dispatch_events(int dispatch_count) {
-  // Create a random number generator
-  std::random_device rd;  // Will be used to obtain a seed for the random number engine
-  std::mt19937 gen(rd()); // Standard mersenne_twister_engine seeded with rd()
-  std::uniform_int_distribution<> distrib(1, 20);
-
-
   for (auto loop = 0; loop < dispatch_count; ++loop) {
-    // Generate a random number between 1 and 20
-    const auto random_number = distrib(gen);
-
-    // Create the string with the random number
-    std::string result = "on_load_" + std::to_string(random_number);
-
-    Scripting::dispatch_event(result);
+    scripting::events::random_loadtest_function();
   }
 }
 
@@ -108,6 +99,8 @@ double load_test(double last_run_time_seconds, bool multi_threaded) {
 
 // Function to handle example command
 void example() {
+  auto user = std::make_shared<User>();
+
   std::string input;
   while (true) {
     std::cout << "Enter a message to send to python or type exit." << std::endl;
@@ -126,7 +119,7 @@ void example() {
       break;
     }
 
-    Scripting::dispatch_event("on_ping", input);
+    scripting::events::send_message(user.get(), input);
   }
 }
 
@@ -134,7 +127,7 @@ int main() {
   py::scoped_interpreter guard{};
   py::gil_scoped_release release;
 
-  Scripting::load_scripts("scripts", [](const std::string& script_name, const std::shared_ptr<ScriptModule>&) {
+  scripting::load_scripts("scripts", [](const std::string& script_name, const std::shared_ptr<scripting::models::ScriptModule>&) {
       std::cout << "Script loaded callback: " << script_name << std::endl;
     });
 
