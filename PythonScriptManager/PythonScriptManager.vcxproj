@@ -143,7 +143,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)external\include;$(SolutionDir)external\include\python312;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,10 +156,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Source\Program.cpp" />
-    <ClCompile Include="Source\ScriptManager\Bindings\Bindings.cpp" />
+    <ClCompile Include="Source\ScriptManager\Definitions\Definitions.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Source\ScriptManager\Bindings\Bindings.h" />
+    <ClInclude Include="Source\User.h" />
+    <ClInclude Include="Source\ScriptManager\Definitions\ExampleDefinitions.h" />
+    <ClInclude Include="Source\ScriptManager\Definitions\LoadTestDefinitions.h" />
+    <ClInclude Include="Source\ScriptManager\Events\Events.h" />
+    <ClInclude Include="Source\ScriptManager\Events\ExampleEvents.h" />
     <ClInclude Include="Source\ScriptManager\Logger.h" />
     <ClInclude Include="Source\ScriptManager\Models\ScriptModule.h" />
     <ClInclude Include="Source\ScriptManager\ScriptManager.h" />

@@ -4,7 +4,7 @@
 #include <sstream>
 #include <utility>
 
-namespace Scripting {
+namespace scripting {
   enum LogType : unsigned int {
     LOG_INFO = 0,
     LOG_WARNING,
